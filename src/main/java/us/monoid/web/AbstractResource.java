@@ -5,6 +5,7 @@ package us.monoid.web;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -89,22 +90,28 @@ public abstract class AbstractResource extends Resty {
 	}
 
 	/**
+	 * Get the responseCode for the URLConnection
+	 *
+	 * @return responseCode
+	 */
+	public int status() {
+		int code = -1;
+		try {
+			code = ((HttpURLConnection)urlConnection).getResponseCode();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return code;
+	}
+
+	/**
 	 * Check if the URLConnection has returned the specified responseCode
 	 * 
 	 * @param responseCode
 	 * @return
 	 */
 	public boolean status(int responseCode) {
-		if (urlConnection instanceof HttpURLConnection) {
-			HttpURLConnection http = (HttpURLConnection) urlConnection;
-			try {
-				return http.getResponseCode() == responseCode;
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-		} else
-			return false;
+		return status() == responseCode;
 	}
 
 	/**
@@ -117,6 +124,23 @@ public abstract class AbstractResource extends Resty {
 			return URI.create(loc);
 		}
 		return null;
+	}
+
+	/**
+	 * Returns all values for the given header.
+	 *
+	 * @param name The header name
+	 * @return List of values for the specified header
+	 */
+	public List<String> header( String name ) {
+		List list = new ArrayList();
+		HttpURLConnection http = http();
+		if (http != null) {
+			Map<String, List<String>> header = http.getHeaderFields();
+			for (String val : header.get(name))
+				list.add(val);
+		}
+		return list;
 	}
 
 	/** Print out the response headers for this resource.
